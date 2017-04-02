@@ -248,6 +248,11 @@ def apply_PCA_from_Eig(X, U, l, mu) :
     # hint: you can find Z in one-line using matrix-vector algebra
     Ul = None
     Z = None
+    Z = np.zeros((n,l))
+    for i in xrange(n):
+        for j in xrange(l):
+            Z[i, j] = np.dot(U[:, j],(X[i,:]-mu))
+    Ul = U[:, :l]
     ### ========== TODO : END ========== ###
     return Z, Ul
 
@@ -271,5 +276,6 @@ def reconstruct_from_PCA(Z, U, mu) :
     # part 1c: implement
     # hint: you can find X_rec in one-line using matrix-vector algebra
     X_rec = None
+    X_rec = np.dot(Z, np.transpose(U))+mu
     ### ========== TODO : END ========== ###
     return X_rec

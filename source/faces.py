@@ -217,12 +217,19 @@ def main() :
     # part 1: explore LFW data set
     X, y = util.get_lfw_data()
     n, d = X.shape
-    util.show_image(X[500, :])
-    util.show_image(X[1000, :])
-    util.show_image(X[1500, :])
+    # util.show_image(X[500, :])
+    # util.show_image(X[1000, :])
+    # util.show_image(X[1500, :])
 
     mean = np.mean(X, axis=0)
-    util.show_image(mean)
+    #util.show_image(mean)
+
+    U, mu = util.PCA(X)
+    #util.plot_gallery([util.vec_to_image(U[:,i]) for i in xrange(12)])
+
+    Z, Ul = util.apply_PCA_from_Eig(X, U, 1000, mu)
+    X_rec = util.reconstruct_from_PCA(Z, Ul, mu)
+    util.plot_gallery([util.vec_to_image(X_rec[:,i]) for i in xrange(12)])
     ### ========== TODO : END ========== ###
     
     
