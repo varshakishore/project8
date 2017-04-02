@@ -215,7 +215,14 @@ def kMedoids(points, k, init='random', plot=False) :
 def main() :
     ### ========== TODO : START ========== ###
     # part 1: explore LFW data set
-    
+    X, y = util.get_lfw_data()
+    n, d = X.shape
+    util.show_image(X[500, :])
+    util.show_image(X[1000, :])
+    util.show_image(X[1500, :])
+
+    mean = np.mean(X, axis=0)
+    util.show_image(mean)
     ### ========== TODO : END ========== ###
     
     
