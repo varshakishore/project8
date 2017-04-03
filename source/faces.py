@@ -131,7 +131,7 @@ def random_init(points, k) :
     """
     ### ========== TODO : START ========== ###
     # part 2c: implement (hint: use np.random.choice)
-    return None
+    return np.random.choice(points, size=k, replace=False)
     ### ========== TODO : END ========== ###
 
 
@@ -158,6 +158,79 @@ def cheat_init(points) :
     return initial_points
     ### ========== TODO : END ========== ###
 
+def findNearestAveLabel(point, aves):
+    """
+    Return which average index a point is nearest to
+    Parameters
+    --------------------
+        point  --  Point
+        centroid       -- list of Points, centroids of clusters
+    
+    Returns
+    --------------------
+        i -- index of nearest cluster
+    """
+    return np.argmin([point.distance(ave) for ave in aves])
+
+def kAverages(points, k, average, init='random', plot=True):
+    """
+    Cluster points into k clusters using variations of k-means algorithm.
+    
+    Parameters
+    --------------------
+        points  -- list of Points, dataset
+        k       -- int, number of clusters
+        average -- method of ClusterSet
+                   determines how to calculate average of points in cluster
+                   allowable: ClusterSet.centroids, ClusterSet.medoids
+        init    -- string, method of initialization
+                   allowable: 
+                       'cheat'  -- use cheat_init to initialize clusters
+                       'random' -- use random_init to initialize clusters
+        plot    -- bool, True to plot clusters with corresponding averages
+                         for each iteration of algorithm
+    
+    Returns
+    --------------------
+        k_clusters -- ClusterSet, k clusters
+    """
+    
+    ### ========== TODO : START ========== ###
+    # part 2c: implement
+    # Hints:
+    #   (1) On each iteration, keep track of the new cluster assignments
+    #       in a separate data structure. Then use these assignments to 
+    #       create new Cluster objects and a new ClusterSet object. Then
+    #       update the centroids.
+    #   (2) Repeat until the clustering no longer changes.
+    #   (3) To plot, use plot_clusters(...).
+    # Initialize cluster centers:
+    aves = []
+    if init == "random":
+        aves = random_init(points, k)
+    elif init == "cheat":
+        aves = cheat_init(points)
+    prev_aves = []
+    k_clusters = ClusterSet()
+    it = 0
+    while not np.array_equal([ave.attrs for ave in aves], prev_aves):
+        k_clusters = ClusterSet()
+        clusterPoints = [[] for ave in aves]
+        # Assign points to nearest centroid
+        for point in points:
+            point.label = findNearestAveLabel(point, aves)
+            clusterPoints[point.label].append(point)
+        # Move cluster centroid to mean of points assigned
+        for pointList in clusterPoints:
+            cluster = Cluster(pointList)
+            k_clusters.add(cluster)
+        prev_aves = [ave.attrs for ave in aves]
+        aves = average(k_clusters)
+        plot_clusters(k_clusters, "Iteration".format(iter), average)
+        print "Iteration: " + str(it)
+        it += 1
+    return k_clusters
+    ### ========== TODO : END ========== ###
 
 def kMeans(points, k, init='random', plot=False) :
     """
@@ -191,8 +264,8 @@ def kMeans(points, k, init='random', plot=False) :
     #       update the centroids.
     #   (2) Repeat until the clustering no longer changes.
     #   (3) To plot, use plot_clusters(...).
-    k_clusters = ClusterSet()
-    return k_clusters
+    # Initialize cluster centers:
+    return kAverages(points, k, ClusterSet.centroids, init, plot)
     ### ========== TODO : END ========== ###
 
 
@@ -203,8 +276,7 @@ def kMedoids(points, k, init='random', plot=False) :
     """
     ### ========== TODO : START ========== ###
     # part 2d: implement
-    k_clusters = ClusterSet()
-    return k_clusters
+    return kAverages(points, k, ClusterSet.medoids, init, plot)
     ### ========== TODO : END ========== ###
 
 
@@ -215,21 +287,21 @@ def kMedoids(points, k, init='random', plot=False) :
 def main() :
     ### ========== TODO : START ========== ###
     # part 1: explore LFW data set
-    X, y = util.get_lfw_data()
-    n, d = X.shape
-    # util.show_image(X[500, :])
-    # util.show_image(X[1000, :])
-    # util.show_image(X[1500, :])
+    # X, y = util.get_lfw_data()
+    # n, d = X.shape
+    # # util.show_image(X[500, :])
+    # # util.show_image(X[1000, :])
+    # # util.show_image(X[1500, :])
 
-    mean = np.mean(X, axis=0)
-    #util.show_image(mean)
+    # mean = np.mean(X, axis=0)
+    # #util.show_image(mean)
 
-    U, mu = util.PCA(X)
-    #util.plot_gallery([util.vec_to_image(U[:,i]) for i in xrange(12)])
+    # U, mu = util.PCA(X)
+    # #util.plot_gallery([util.vec_to_image(U[:,i]) for i in xrange(12)])
 
-    Z, Ul = util.apply_PCA_from_Eig(X, U, 1000, mu)
-    X_rec = util.reconstruct_from_PCA(Z, Ul, mu)
-    util.plot_gallery([util.vec_to_image(X_rec[:,i]) for i in xrange(12)])
+    # Z, Ul = util.apply_PCA_from_Eig(X, U, 1000, mu)
+    # X_rec = util.reconstruct_from_PCA(Z, Ul, mu)
+    # util.plot_gallery([util.vec_to_image(X_rec[:,i]) for i in xrange(12)])
     ### ========== TODO : END ========== ###
     
     

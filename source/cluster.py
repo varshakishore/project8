@@ -114,7 +114,15 @@ class Cluster(object) :
         ### ========== TODO : START ========== ###
         # part 2b: implement
         # set the centroid label to any value (e.g. the most common label in this cluster)
-        centroid = None
+        labels = []
+        for p in self.points :
+            labels.append(p.label)
+        attrs = []
+        for p in self.points :
+            attrs.append(p.attrs)
+        cluster_label, count = stats.mode(labels)
+        attr = np.mean(attrs, axis=0)
+        centroid = Point("Centroid", cluster_label, attr)
         return centroid
         ### ========== TODO : END ========== ###
     
@@ -132,6 +140,14 @@ class Cluster(object) :
         ### ========== TODO : START ========== ###
         # part 2b: implement
         medoid = None
+        leastDist = float("inf")
+        for point1 in self.points:
+            totalDist = 0
+            for point2 in self.points:
+                totalDist += point1.distance(point2)
+            if totalDist < leastDist:
+                medoid = point1
+                leastDist = totalDist
         return medoid
         ### ========== TODO : END ========== ###
     
@@ -191,6 +207,8 @@ class ClusterSet(object):
         ### ========== TODO : START ========== ###
         # part 2b: implement
         centroids = []
+        for cluster in self.members:
+            centroids.append(cluster.centroid())
         return centroids
         ### ========== TODO : END ========== ###
     
@@ -207,6 +225,8 @@ class ClusterSet(object):
         ### ========== TODO : START ========== ###
         # part 2b: implement
         medoids = []
+        for cluster in self.members:
+            medoids.append(cluster.medoid())
         return medoids
         ### ========== TODO : END ========== ###
     
