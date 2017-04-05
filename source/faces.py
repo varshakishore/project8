@@ -226,8 +226,7 @@ def kAverages(points, k, average, init='random', plot=True):
             k_clusters.add(cluster)
         prev_aves = [ave.attrs for ave in aves]
         aves = average(k_clusters)
-        plot_clusters(k_clusters, "Iteration".format(iter), average)
-        print "Iteration: " + str(it)
+        plot_clusters(k_clusters, "Iteration ".format(iter)+ str(it), average)
         it += 1
     return k_clusters
     ### ========== TODO : END ========== ###
@@ -287,21 +286,21 @@ def kMedoids(points, k, init='random', plot=False) :
 def main() :
     ### ========== TODO : START ========== ###
     # part 1: explore LFW data set
-    # X, y = util.get_lfw_data()
-    # n, d = X.shape
-    # # util.show_image(X[500, :])
-    # # util.show_image(X[1000, :])
-    # # util.show_image(X[1500, :])
+    X, y = util.get_lfw_data()
+    n, d = X.shape
+    # util.show_image(X[500, :])
+    # util.show_image(X[1000, :])
+    # util.show_image(X[1500, :])
 
-    # mean = np.mean(X, axis=0)
-    # #util.show_image(mean)
+    mean = np.mean(X, axis=0)
+    #util.show_image(mean)
 
-    # U, mu = util.PCA(X)
-    # #util.plot_gallery([util.vec_to_image(U[:,i]) for i in xrange(12)])
+    U, mu = util.PCA(X)
+    util.plot_gallery([util.vec_to_image(U[:,i]) for i in xrange(12)])
 
-    # Z, Ul = util.apply_PCA_from_Eig(X, U, 1000, mu)
-    # X_rec = util.reconstruct_from_PCA(Z, Ul, mu)
-    # util.plot_gallery([util.vec_to_image(X_rec[:,i]) for i in xrange(12)])
+    Z, Ul = util.apply_PCA_from_Eig(X, U, 100, mu)
+    X_rec = util.reconstruct_from_PCA(Z, Ul, mu)
+    util.plot_gallery([util.vec_to_image(X_rec[i,:]) for i in xrange(12)])
     ### ========== TODO : END ========== ###
     
     
