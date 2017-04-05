@@ -155,7 +155,17 @@ def cheat_init(points) :
     ### ========== TODO : START ========== ###
     # part 2e: implement
     initial_points = []
-    return initial_points
+    pointsDict = {}
+    clusterSet = ClusterSet()
+
+    for point in points:
+        if point.label in pointsDict:
+            pointsDict[point.label].append(point)
+        else:
+            pointsDict[point.label] = [point]
+    for pointsSet in pointsDict.values():
+        clusterSet.add(Cluster(pointsSet))
+    return clusterSet.medoids()
     ### ========== TODO : END ========== ###
 
 def findNearestAveLabel(point, aves):
@@ -226,7 +236,8 @@ def kAverages(points, k, average, init='random', plot=True):
             k_clusters.add(cluster)
         prev_aves = [ave.attrs for ave in aves]
         aves = average(k_clusters)
-        plot_clusters(k_clusters, "Iteration ".format(iter)+ str(it), average)
+        if plot:
+            plot_clusters(k_clusters, "Iteration ".format(iter)+ str(it), average)
         it += 1
     return k_clusters
     ### ========== TODO : END ========== ###
@@ -292,15 +303,17 @@ def main() :
     # util.show_image(X[1000, :])
     # util.show_image(X[1500, :])
 
-    mean = np.mean(X, axis=0)
-    #util.show_image(mean)
+    # mean = np.mean(X, axis=0)
+    # util.show_image(mean)
 
-    U, mu = util.PCA(X)
-    util.plot_gallery([util.vec_to_image(U[:,i]) for i in xrange(12)])
+    # U, mu = util.PCA(X)
+    # util.plot_gallery([util.vec_to_image(U[:,i]) for i in xrange(12)])
 
-    Z, Ul = util.apply_PCA_from_Eig(X, U, 100, mu)
-    X_rec = util.reconstruct_from_PCA(Z, Ul, mu)
-    util.plot_gallery([util.vec_to_image(X_rec[i,:]) for i in xrange(12)])
+    # l_list = [1, 10, 50, 100, 500, 1288]
+    # for l in l_list:
+    #     Z, Ul = util.apply_PCA_from_Eig(X, U, l, mu)
+    #     X_rec = util.reconstruct_from_PCA(Z, Ul, mu)
+    #     util.plot_gallery([util.vec_to_image(X_rec[i,:]) for i in xrange(12)])
     ### ========== TODO : END ========== ###
     
     
@@ -336,10 +349,40 @@ def main() :
     ### ========== TODO : START ========== ###    
     # part 3a: cluster faces
     np.random.seed(1234)
-        
+    X1, y1 = util.limit_pics(X, y, [4, 6, 13, 16], 40)
+    points = build_face_image_points(X1, y1)
+    kmeans_score_list = []
+    kmedoids_score_list = []
+    k = 4
+    # for i in xrange(10):
+    #     kmeans_clusters = kMeans(points, k, init='random', plot=False)
+    #     kmedoids_clusters = kMedoids(points, k, init='random', plot=False) 
+    #     kmeans_score_list.append(kmeans_clusters.score())
+    #     kmedoids_score_list.append(kmedoids_clusters.score())
+    # print "Average for k-means: ", np.mean(kmeans_score_list)
+    # print "Minimum for k-means: ", min(kmeans_score_list)
+    # print "Maximum for k-means: ", max(kmeans_score_list)
+    # print "Average for k-medoids: ", np.mean(kmedoids_score_list)
+    # print "Minimum for k-medoids: ", min(kmedoids_score_list)
+    # print "Maximum for k-medoids: ", max(kmedoids_score_list)
+
     # part 3b: explore effect of lower-dimensional representations on clustering performance
     np.random.seed(1234)
-    
+    k = 2
+    X1, y1 = util.limit_pics(X, y, [4, 13], 40)
+    U, mu = util.PCA(X1)
+    kmeans_score_list = []
+    kmedoids_score_list = []
+    for l in xrange(1, 42, 2):
+        Z, Ul = util.apply_PCA_from_Eig(X1, U, l, mu)
+        points = build_face_image_points(Z, y1)
+        kmeans_clusters = kMeans(points, k, init='cheat', plot=False)
+        kmedoids_clusters = kMedoids(points, k, init='cheat', plot=False) 
+        kmeans_score_list.append(kmeans_clusters.score())
+        kmedoids_score_list.append(kmedoids_clusters.score())
+    plt.plot(range(1,42,2), kmedoids_score_list, 'go')
+    plt.plot(range(1,42,2), kmeans_score_list, 'bo')
+    plt.show()
     # part 3c: determine ``most discriminative'' and ``least discriminative'' pairs of images
     np.random.seed(1234)
     
