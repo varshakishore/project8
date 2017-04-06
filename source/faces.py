@@ -200,7 +200,7 @@ def definitelyNotCheating_init(points, k):
     sortedDistances = np.sort(distances)
     # Calculate k evenly spaced intervals in sorted array
     interval = int(np.floor(len(points) / float(k)))
-    for i in range(0, len(points), k):
+    for i in range(0, len(points), interval):
         # For each interval append a point at that distance to the initial points
         pointIndex = np.where(sortedDistances[i] == distances)[0][0]
         initial_points.append(points[pointIndex])
@@ -398,7 +398,6 @@ def main() :
     for i in xrange(10):
         points = build_face_image_points(X1, y1)
         kmeans_clusters = kMeans(points, k, init='random', plot=False)
-        points = build_face_image_points(X1, y1)
         kmedoids_clusters = kMedoids(points, k, init='random', plot=False) 
         kmeans_score_list.append(kmeans_clusters.score())
         kmedoids_score_list.append(kmedoids_clusters.score())
@@ -507,7 +506,6 @@ def main() :
     for i in xrange(10):
         points = build_face_image_points(X1, y1)
         kmeans_clusters = kMeans(points, k, init='notCheat', plot=False)
-        points = build_face_image_points(X1, y1)
         kmedoids_clusters = kMedoids(points, k, init='notCheat', plot=False) 
         kmeans_score_list.append(kmeans_clusters.score())
         kmedoids_score_list.append(kmedoids_clusters.score())

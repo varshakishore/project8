@@ -33,7 +33,7 @@
 \begin{enumerate}[(a)]
 \item The average face seems to focus on common features like eyes, nose and mouth that are in every picture in the data set. 
 \item In the first 12 principle components, we can see different images representing different aspects of faces that might offer the most variance. For instance, in the first three, there is a lot of emphasis on color and face shape, where as the 8th we see features, and in the last two we see what seem to be faces ordered in different directions.  The principle components seek to explain the highest variance dimensions of the data. Thus, by emphasizing features such as face shape, eyes/mouth/nose and face angle, the principle components here represent important elements of faces.
-\item Some people seem to be represented more clearly with lower $l$'s. For some of the other faces we need $l$ to be $100$ or higher for the face to become clear. 
+\item Some people seem to be represented more clearly with lower $l$'s. For some of the other faces we need $l$ to be $100$ or higher for the face to become clear. This probably corresponds to how well represented they are by the principle components.
 \end{enumerate}
 \item $K$-Means and $K$-Medoids
 \begin{enumerate}[(a)]
@@ -55,10 +55,10 @@ also minimize with respect to $k$, we will massively overfit the data.
   k-medoids & 0.63125 & 0.575 & 0.725   \\
   \hline
 \end{tabular}\\ \\
-K-means took around $1$ second to run and k-medoids took around $3$ seconds to run. Looking at the numbers in the table above, it seems like k-medoids very slightly outperformed k-means. k-medoids seems to have a smaller variance. 
+K-means took around $1$ second to run and k-medoids took around $3$ seconds to run. Looking at the numbers in the table above, it seems like k-medoids very slightly outperformed k-means. k-medoids seems to have a smaller variance as well. 
 \item In this graph we see that k-medoids outperforms k-means for every $l$ except for $l=1$. We also see that the performance initially increases or stays constant as $l$ increases (roughly until $l=10$), then the performance decreases. We need enough principle components to represent the variance in the images, so for the first few values of $l$, performance increases. When $l$ become greater than $20$ there might be issues due to higher dimensionality and noise that leads to reduced scores.  \\
 \includegraphics[scale=0.7]{figure_1}
-\item We first wanted to identify two faces that are similar and two faces that are dissimilar. We did this by computing "average face" (average of all the features) for every person. Then we found two people who had averages face values that were very close (the classes corresponding to these people are $0$ and $2$) and two people who had averages face values that were far apart (the classes corresponding to these people are $13$ and $16$). From previous parts, we saw that k-medoids performed slightly better. So, we used k-medoids to see how well the algorithm performs when we try to cluster classes $0,2$ and when we try to cluster classes $13,16$. We found that the average score for $0,2$ was $0.5275$ and the average score for $13, 16$ was $0.9325$. As expected the classifier was able to perform better when it was clustering two dissimilar faces.  The table below shows the results that we got: \\ \\
+\item We first wanted to identify two faces that are similar and two faces that are dissimilar. We did this by computing "average face" (average of all the features) for every person. Then we found two people who had averages face values that were very close (the classes corresponding to these people are $0$ and $2$) and two people who had averages face values that were far apart (the classes corresponding to these people are $13$ and $16$). From previous parts, we saw that k-medoids performed slightly better. So, we used k-medoids to see how well the algorithm performs when we try to cluster classes $0,2$ and when we try to cluster classes $13,16$. We found that the average score for $0,2$ was $0.5275$ and the average score for $13, 16$ was $0.9325$. As expected the classifier was able to perform better when it was clustering two dissimilar faces. Interestingly, the similarity/dissimilarity did seem to depend a lot on skin color. This makes sense, as features are based on pixel colors. However, in the real world, it would be important to keep this fact about the features in mind to avoid inadvertently creating a racist model. The table below shows the results that we got: \\ \\
  \begin{tabular}{| c | c | c | c |}
   \hline		
    & Average & Min & Max \\
@@ -76,8 +76,8 @@ Here are images of the dissimilar faces (class $13$ and class $16$): \\
 \includegraphics[scale=0.35]{plot16.png} \\
 \end{enumerate}
 \item Extra Credit! \\
-To initialize $k$ centers we decided to use the following approach. We first pick one random point $p$ from the given $n$ points. Then we compute the distance from $p$ to each of the other points. We sort the distances we computed in ascending order. We pick $k$ evenly separated values from the sorted distances list and find the points corresponding to these distance values and assign those points as centers. We think this is a better way of initializing centers because we are ensuring that the centers are spread apart the entire space. \\
-Our initialization scheme does perform better. Here's a table looking at values we got when we used randomInit, cheatInit and our own init scheme. \\
+To initialize $k$ centers we decided to use the following approach. We first pick one random point $p$ from the given $n$ points. Then we compute the distance from $p$ to each of the other points. We sort the distances we computed in ascending order. We pick $k$ evenly separated values from the sorted distances list and find the points corresponding to these distance values and assign those points as centers. We think this is a better way of initializing centers because we are ensuring that the centers are more evenly distributed in the space. \\
+Our initialization scheme does not perform better. Here's a table looking at values we got when we used randomInit, cheatInit and our own init scheme. Ultimately, this may be because just taking a random choice was already distributing things throughout space, and that some other problem is resulting local minima. \\
  \begin{tabular}{| l | c | c | c |}
   \hline		
    & Average & Min & Max \\
@@ -86,8 +86,8 @@ K-means: random & 0.616875 & 0.55 & 0.775 \\
   K-medoids: random & 0.63125 & 0.575 & 0.725   \\
 K-means: cheat & 0.7875 & 0.7875 & 0.7875 \\
   K-medoids: cheat  & 0.75 & 0.75 & 0.75   \\
-K-means: our init & 0.864375 & 0.83125 & 0.9125 \\
-  K-medoids: our init  & 0.878125 & 0.85625 & 0.9   \\
+K-means: our init & 0.6425 & 0.53125 & 0.80625 \\
+  K-medoids: our init  & 0.62125 & 0.5 & 0.725   \\
   \hline
 \end{tabular}
 
