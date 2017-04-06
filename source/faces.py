@@ -308,8 +308,8 @@ def main() :
     # mean = np.mean(X, axis=0)
     # util.show_image(mean)
 
-    U, mu = util.PCA(X)
-    util.plot_gallery([util.vec_to_image(U[:,i]) for i in xrange(12)])
+    # U, mu = util.PCA(X)
+    # util.plot_gallery([util.vec_to_image(U[:,i]) for i in xrange(12)])
 
     # l_list = [1, 10, 50, 100, 500, 1288]
     # for l in l_list:
@@ -327,13 +327,13 @@ def main() :
     # centroid: [ 1.04022358  0.62914619]
     # medoid:   [ 1.05674064  0.71183522]
     
-    np.random.seed(1234)
-    sim_points = generate_points_2d(20)
-    cluster = Cluster(sim_points)
-    print 'centroid:', cluster.centroid().attrs
-    print 'medoid:', cluster.medoid().attrs
+    # np.random.seed(1234)
+    # sim_points = generate_points_2d(20)
+    # cluster = Cluster(sim_points)
+    # print 'centroid:', cluster.centroid().attrs
+    # print 'medoid:', cluster.medoid().attrs
     
-    # parts 2c-e: test kMeans and kMedoids implementation using toy dataset
+    # # parts 2c-e: test kMeans and kMedoids implementation using toy dataset
     # np.random.seed(1234)
     # sim_points = generate_points_2d(20)
     # k = 3
@@ -350,43 +350,44 @@ def main() :
     
     ### ========== TODO : START ========== ###    
     # part 3a: cluster faces
-    np.random.seed(1234)
-    X1, y1 = util.limit_pics(X, y, [4, 6, 13, 16], 40)
-    points = build_face_image_points(X1, y1)
-    kmeans_score_list = []
-    kmedoids_score_list = []
-    k = 4
-    for i in xrange(10):
-        points = build_face_image_points(X1, y1)
-        kmeans_clusters = kMeans(points, k, init='random', plot=False)
-        points = build_face_image_points(X1, y1)
-        kmedoids_clusters = kMedoids(points, k, init='random', plot=False) 
-        kmeans_score_list.append(kmeans_clusters.score())
-        kmedoids_score_list.append(kmedoids_clusters.score())
-    print "Average for k-means: ", np.mean(kmeans_score_list)
-    print "Minimum for k-means: ", min(kmeans_score_list)
-    print "Maximum for k-means: ", max(kmeans_score_list)
-    print "Average for k-medoids: ", np.mean(kmedoids_score_list)
-    print "Minimum for k-medoids: ", min(kmedoids_score_list)
-    print "Maximum for k-medoids: ", max(kmedoids_score_list)
+    # np.random.seed(1234)
+    # X1, y1 = util.limit_pics(X, y, [4, 6, 13, 16], 40)
+    # points = build_face_image_points(X1, y1)
+    # kmeans_score_list = []
+    # kmedoids_score_list = []
+    # k = 4
+    # for i in xrange(10):
+    #     points = build_face_image_points(X1, y1)
+    #     kmeans_clusters = kMeans(points, k, init='random', plot=False)
+    #     points = build_face_image_points(X1, y1)
+    #     kmedoids_clusters = kMedoids(points, k, init='random', plot=False) 
+    #     kmeans_score_list.append(kmeans_clusters.score())
+    #     kmedoids_score_list.append(kmedoids_clusters.score())
+    # print "Average for k-means: ", np.mean(kmeans_score_list)
+    # print "Minimum for k-means: ", min(kmeans_score_list)
+    # print "Maximum for k-means: ", max(kmeans_score_list)
+    # print "Average for k-medoids: ", np.mean(kmedoids_score_list)
+    # print "Minimum for k-medoids: ", min(kmedoids_score_list)
+    # print "Maximum for k-medoids: ", max(kmedoids_score_list)
 
     # part 3b: explore effect of lower-dimensional representations on clustering performance
     np.random.seed(1234)
-    # k = 2
-    # X1, y1 = util.limit_pics(X, y, [4, 13], 40)
-    # U, mu = util.PCA(X1)
-    # kmeans_score_list = []
-    # kmedoids_score_list = []
-    # for l in xrange(1, 42, 2):
-    #     Z, Ul = util.apply_PCA_from_Eig(X1, U, l, mu)
-    #     points = build_face_image_points(Z, y1)
-    #     kmeans_clusters = kMeans(points, k, init='cheat', plot=False)
-    #     kmedoids_clusters = kMedoids(points, k, init='cheat', plot=False) 
-    #     kmeans_score_list.append(kmeans_clusters.score())
-    #     kmedoids_score_list.append(kmedoids_clusters.score())
-    # plt.plot(range(1,42,2), kmedoids_score_list, 'go')
-    # plt.plot(range(1,42,2), kmeans_score_list, 'bo')
-    # plt.show()
+    k = 2
+    X1, y1 = util.limit_pics(X, y, [4, 13], 40)
+    U, mu = util.PCA(X1)
+    kmeans_score_list = []
+    kmedoids_score_list = []
+    for l in xrange(1, 42, 2):
+        Z, Ul = util.apply_PCA_from_Eig(X1, U, l, mu)
+        points = build_face_image_points(Z, y1)
+        kmeans_clusters = kMeans(points, k, init='cheat', plot=False)
+        kmedoids_clusters = kMedoids(points, k, init='cheat', plot=False) 
+        kmeans_score_list.append(kmeans_clusters.score())
+        kmedoids_score_list.append(kmedoids_clusters.score())
+    plt.plot(range(1,42,2), kmedoids_score_list, 'go', label="k-Medoids")
+    plt.plot(range(1,42,2), kmeans_score_list, 'bo', label="k-Means")
+    plt.legend()
+    plt.show()
     # part 3c: determine ``most discriminative'' and ``least discriminative'' pairs of images
     np.random.seed(1234)
     
