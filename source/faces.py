@@ -158,15 +158,47 @@ def cheat_init(points) :
     pointsDict = {}
     clusterSet = ClusterSet()
 
+    # Find cluster of each point based on labels
     for point in points:
         if point.label in pointsDict:
             pointsDict[point.label].append(point)
         else:
             pointsDict[point.label] = [point]
+    # Add each found cluster to a cluster set
     for pointsSet in pointsDict.values():
         clusterSet.add(Cluster(pointsSet))
     return clusterSet.medoids()
     ### ========== TODO : END ========== ###
+
+def definitelyNotCheating_init(points, k):
+    """
+    Initialize clusters by definitely not cheating!
+    (AKA we find the distance from one point to all others,
+    and then pick points at even distances from that point
+    to try to get a good distribution in space)
+    
+    Parameters
+    --------------------
+        points         -- list of Points, dataset
+        k              -- int, number of clusters
+    
+    Returns
+    --------------------
+        initial_points -- list of k Points, initial cluster centers
+    """
+    initial_points = []
+    # Pick a point randomly to start on
+    startPoint = np.random.choice(points)
+    # Calculate distance from point to all other points
+    distances = [np.linalg.norm(startPoint.attrs-other.attrs) for other in points]
+    sortedDistances = np.sort(distances)
+    # Calculate k evenly spaced intervals in sorted array
+    interval = int(np.floor(len(points) / float(k)))
+    for i in range(0, len(points), k):
+        # For each interval append a point at that distance to the initial points
+        pointIndex = np.where(sortedDistances[i] == distances)[0][0]
+        initial_points.append(points[pointIndex])
+    return initial_points
 
 def findNearestAveLabel(point, aves):
     """
@@ -220,6 +252,8 @@ def kAverages(points, k, average, init='random', plot=True):
         aves = random_init(points, k)
     elif init == "cheat":
         aves = cheat_init(points)
+    elif init == "notCheat":
+        aves = definitelyNotCheating_init(points, k)
     prev_aves = []
     k_clusters = ClusterSet()
     it = 0
@@ -229,7 +263,6 @@ def kAverages(points, k, average, init='random', plot=True):
         clusterPoints = [[] for ave in aves]
         # Assign points to nearest centroid
         for point in points:
-            # point.label = findNearestAveLabel(point, aves)
             i = findNearestAveLabel(point, aves)
             clusterPoints[i].append(point)
         # Move cluster centroid to mean of points assigned
@@ -316,14 +349,14 @@ def main() :
     #     Z, Ul = util.apply_PCA_from_Eig(X, U, l, mu)
     #     X_rec = util.reconstruct_from_PCA(Z, Ul, mu)
     #     util.plot_gallery([util.vec_to_image(X_rec[i,:]) for i in xrange(12)])
-    ### ========== TODO : END ========== ###
+    # ### ========== TODO : END ========== ###
     
     
     
-    #========================================
-    # part 2
+    # #========================================
+    # # part 2
     
-    # part b: test Cluster implementation    
+    # # part b: test Cluster implementation    
     # centroid: [ 1.04022358  0.62914619]
     # medoid:   [ 1.05674064  0.71183522]
     
@@ -348,8 +381,8 @@ def main() :
     
     
     
-    ### ========== TODO : START ========== ###    
-    # part 3a: cluster faces
+    # ### ========== TODO : START ========== ###    
+    # # part 3a: cluster faces
     # np.random.seed(1234)
     # X1, y1 = util.limit_pics(X, y, [4, 6, 13, 16], 40)
     # points = build_face_image_points(X1, y1)
@@ -370,7 +403,7 @@ def main() :
     # print "Minimum for k-medoids: ", min(kmedoids_score_list)
     # print "Maximum for k-medoids: ", max(kmedoids_score_list)
 
-    # part 3b: explore effect of lower-dimensional representations on clustering performance
+    # # part 3b: explore effect of lower-dimensional representations on clustering performance
     # np.random.seed(1234)
     # k = 2
     # X1, y1 = util.limit_pics(X, y, [4, 13], 40)
@@ -388,68 +421,96 @@ def main() :
     # plt.plot(range(1,42,2), kmeans_score_list, 'bo', label="k-Means")
     # plt.legend()
     # plt.show()
-    # part 3c: determine ``most discriminative'' and ``least discriminative'' pairs of images
+
+    # # part 3c: determine ``most discriminative'' and ``least discriminative'' pairs of images
+    # np.random.seed(1234)
+
+    # # Find "average" face for each class of faces
+    # labels = np.unique(y)
+    # averages = []
+    # for label in labels:
+    #     # Find images with that label
+    #     indices = np.where(y==label)
+    #     pointVals = X[indices]
+    #     # Average across all images in class
+    #     averagePoint = np.mean(pointVals, axis=0)
+    #     averages.append(averagePoint)
+
+    # # Find further and closest faces based on averages
+    # farDist = 0
+    # farFaces = None
+    # closeDist = float("inf")
+    # closeFaces = None
+    # # Compare all distances
+    # for i in range(len(labels)):
+    #     for j in range(i+1, len(labels)):
+    #         dist = np.linalg.norm(averages[i]-averages[j])
+    #         if dist > farDist:
+    #             farDist = dist
+    #             farFaces = (i, j)
+    #         if dist < closeDist:
+    #             closeDist = dist
+    #             closeFaces = (i, j)
+    # # Pull out images for each chosen face
+    # closeLabel1 = closeFaces[0]
+    # closeIndices1 = np.where(y==closeLabel1)[0]
+    # closeLabel2 = closeFaces[1]
+    # closeIndices2 = np.where(y==closeLabel2)[0]
+    # farLabel1 = farFaces[0]
+    # farIndices1 = np.where(y==farLabel1)[0]
+    # farLabel2 = farFaces[1]
+    # farIndices2 = np.where(y==farLabel2)[0]
+
+    # print "Close: ", closeLabel1
+    # util.plot_gallery([util.vec_to_image(X[i,:]) for i in closeIndices1])
+    # print "Close: ", closeLabel2
+    # util.plot_gallery([util.vec_to_image(X[i,:]) for i in closeIndices2])
+    # print "Far: ", farLabel1
+    # util.plot_gallery([util.vec_to_image(X[i,:]) for i in farIndices1])
+    # print "Far: ", farLabel2
+    # util.plot_gallery([util.vec_to_image(X[i,:]) for i in farIndices2])
+
+    # close_score_list = []
+    # far_score_list = []
+    # k = 2
+    # # Get points for each chosen face and run k-Medoids
+    # # k-Medoids chosen because it performed better than k-Means in previous runs
+    # XClose, yClose = util.limit_pics(X, y, [closeLabel1, closeLabel2], 40)
+    # XFar, yFar = util.limit_pics(X, y, [farLabel1, farLabel2], 40)
+    # pointsClose = build_face_image_points(XClose, yClose)
+    # pointsFar = build_face_image_points(XFar, yFar)
+    # for i in range(10):
+    #     kmedoids_clusters = kMedoids(pointsClose, k, init='random', plot=False) 
+    #     close_score_list.append(kmedoids_clusters.score())
+    #     kmedoids_clusters = kMedoids(pointsFar, k, init='random', plot=False) 
+    #     far_score_list.append(kmedoids_clusters.score())
+    # print "Average for close: ", np.mean(close_score_list)
+    # print "Minimum for close: ", min(close_score_list)
+    # print "Maximum for close: ", max(close_score_list)
+    # print "Average for far: ", np.mean(far_score_list)
+    # print "Minimum for far: ", min(far_score_list)
+    # print "Maximum for far: ", max(far_score_list)
+
+    # part 4: Test out our new init!
     np.random.seed(1234)
-
-    # Find "average" face for each class of faces
-    labels = np.unique(y)
-    averages = []
-    for label in labels:
-        indices = np.where(y==label)
-        pointVals = X[indices]
-        averagePoint = np.mean(pointVals, axis=0)
-        averages.append(averagePoint)
-
-    # Find further and closest faces
-    farDist = 0
-    farFaces = None
-    closeDist = float("inf")
-    closeFaces = None
-    for i in range(len(labels)):
-        for j in range(i+1, len(labels)):
-            dist = np.linalg.norm(averages[i]-averages[j])
-            if dist > farDist:
-                farDist = dist
-                farFaces = (i, j)
-            if dist < closeDist:
-                closeDist = dist
-                closeFaces = (i, j)
-    closeLabel1 = closeFaces[0]
-    closeIndices1 = np.where(y==closeLabel1)[0]
-    closeLabel2 = closeFaces[1]
-    closeIndices2 = np.where(y==closeLabel2)[0]
-    farLabel1 = farFaces[0]
-    farIndices1 = np.where(y==farLabel1)[0]
-    farLabel2 = farFaces[1]
-    farIndices2 = np.where(y==farLabel2)[0]
-
-    print "Close: ", closeLabel1
-    util.plot_gallery([util.vec_to_image(X[i,:]) for i in closeIndices1])
-    print "Close: ", closeLabel2
-    util.plot_gallery([util.vec_to_image(X[i,:]) for i in closeIndices2])
-    print "Far: ", farLabel1
-    util.plot_gallery([util.vec_to_image(X[i,:]) for i in farIndices1])
-    print "Far: ", farLabel2
-    util.plot_gallery([util.vec_to_image(X[i,:]) for i in farIndices2])
-
-    close_score_list = []
-    far_score_list = []
-    k = 2
-    XClose, yClose = util.limit_pics(X, y, [closeLabel1, closeLabel2], 40)
-    XFar, yFar = util.limit_pics(X, y, [farLabel1, farLabel2], 40)
-    pointsClose = build_face_image_points(XClose, yClose)
-    pointsFar = build_face_image_points(XFar, yFar)
-    for i in range(10):
-        kmedoids_clusters = kMedoids(pointsClose, k, init='random', plot=False) 
-        close_score_list.append(kmedoids_clusters.score())
-        kmedoids_clusters = kMedoids(pointsFar, k, init='random', plot=False) 
-        far_score_list.append(kmedoids_clusters.score())
-    print "Average for close: ", np.mean(close_score_list)
-    print "Minimum for close: ", min(close_score_list)
-    print "Maximum for close: ", max(close_score_list)
-    print "Average for far: ", np.mean(far_score_list)
-    print "Minimum for far: ", min(far_score_list)
-    print "Maximum for far: ", max(far_score_list)
+    X1, y1 = util.limit_pics(X, y, [4, 6, 13, 16], 40)
+    points = build_face_image_points(X1, y1)
+    kmeans_score_list = []
+    kmedoids_score_list = []
+    k = 4
+    for i in xrange(10):
+        points = build_face_image_points(X1, y1)
+        kmeans_clusters = kMeans(points, k, init='random', plot=False)
+        points = build_face_image_points(X1, y1)
+        kmedoids_clusters = kMedoids(points, k, init='random', plot=False) 
+        kmeans_score_list.append(kmeans_clusters.score())
+        kmedoids_score_list.append(kmedoids_clusters.score())
+    print "Average for k-means: ", np.mean(kmeans_score_list)
+    print "Minimum for k-means: ", min(kmeans_score_list)
+    print "Maximum for k-means: ", max(kmeans_score_list)
+    print "Average for k-medoids: ", np.mean(kmedoids_score_list)
+    print "Minimum for k-medoids: ", min(kmedoids_score_list)
+    print "Maximum for k-medoids: ", max(kmedoids_score_list)
     
     ### ========== TODO : END ========== ###
 

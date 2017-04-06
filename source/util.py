@@ -273,9 +273,7 @@ def reconstruct_from_PCA(Z, U, mu) :
     ### ========== TODO : START ========== ###
     # part 1c: implement
     # hint: you can find X_rec in one-line using matrix-vector algebra
-    # np.linalg.pinv
     X_rec = None
     X_rec = np.dot(Z, np.transpose(U))+mu
-    # X_rec = np.dot(Z, np.linalg.pinv(U))+mu
     ### ========== TODO : END ========== ###
     return X_rec

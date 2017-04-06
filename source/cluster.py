@@ -115,11 +115,14 @@ class Cluster(object) :
         # part 2b: implement
         # set the centroid label to any value (e.g. the most common label in this cluster)
         labels = []
+        # Pull out labels
         for p in self.points :
             labels.append(p.label)
         attrs = []
+        # Pull out locations
         for p in self.points :
             attrs.append(p.attrs)
+        # Find mode label and mean location
         cluster_label, count = stats.mode(labels)
         attr = np.mean(attrs, axis=0)
         centroid = Point("Centroid", cluster_label, attr)
