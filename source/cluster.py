@@ -1,4 +1,10 @@
 """
+Author      : Savannah Baron and Varsha Kishore
+Class       : HMC CS 158
+Date        : 2017 Feb 27
+Description : Utilities for Famous Faces
+"""
+"""
 Author      : Yi-Chieh Wu
 Class       : HMC CS 158
 Date        : 2017 Feb 27

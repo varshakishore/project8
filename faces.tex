@@ -1,0 +1,540 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{enumerate}
+\usepackage{framed}
+\usepackage{graphicx}
+\usepackage{bm}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{multicol}
+\usepackage{hyperref}
+\begin{document}
+
+\begin{verbatim}
+"""
+Author      : Savannah Baron and Varsha Kishore
+Class       : HMC CS 158
+Date        : 2017 Feb 27
+Description : Utilities for Famous Faces
+"""
+"""
+Author      : Yi-Chieh Wu
+Class       : HMC CS 158
+Date        : 2017 Feb 27
+Description : Famous Faces
+"""
+
+# python libraries
+import collections
+
+# numpy libraries
+import numpy as np
+
+# matplotlib libraries
+import matplotlib.pyplot as plt
+
+# libraries specific to project
+import util
+from cluster import *
+
+######################################################################
+# helper functions
+######################################################################
+
+def build_face_image_points(X, y) :
+    """
+    Translate images to (labeled) points.
+    
+    Parameters
+    --------------------
+        X     -- numpy array of shape (n,d), features (each row is one image)
+        y     -- numpy array of shape (n,), targets
+    
+    Returns
+    --------------------
+        point -- list of Points, dataset (one point for each image)
+    """
+    
+    n,d = X.shape
+    
+    images = collections.defaultdict(list) # key = class, val = list of images with this class
+    for i in xrange(n) :
+        images[y[i]].append(X[i,:])
+    
+    points = []
+    for face in images :
+        count = 0
+        for im in images[face] :
+            points.append(Point(str(face) + '_' + str(count), face, im))
+            count += 1
+
+    return points
+
+
+def plot_clusters(clusters, title, average) :
+    """
+    Plot clusters along with average points of each cluster.
+
+    Parameters
+    --------------------
+        clusters -- ClusterSet, clusters to plot
+        title    -- string, plot title
+        average  -- method of ClusterSet
+                    determines how to calculate average of points in cluster
+                    allowable: ClusterSet.centroids, ClusterSet.medoids
+    """
+    
+    plt.figure()
+    np.random.seed(20)
+    label = 0
+    colors = {}
+    centroids = average(clusters)
+    for c in centroids :
+        coord = c.attrs
+        plt.plot(coord[0],coord[1], 'ok', markersize=12)
+    for cluster in clusters.members :
+        label += 1
+        colors[label] = np.random.rand(3,)
+        for point in cluster.points :
+            coord = point.attrs
+            plt.plot(coord[0], coord[1], 'o', color=colors[label])
+    plt.title(title)
+    plt.show()
+
+
+def generate_points_2d(N, seed=1234) :
+    """
+    Generate toy dataset of 3 clusters each with N points.
+    
+    Parameters
+    --------------------
+        N      -- int, number of points to generate per cluster
+        seed   -- random seed
+    
+    Returns
+    --------------------
+        points -- list of Points, dataset
+    """
+    np.random.seed(seed)
+    
+    mu = [[0,0.5], [1,1], [2,0.5]]
+    sigma = [[0.1,0.1], [0.25,0.25], [0.15,0.15]]
+    
+    label = 0
+    points = []
+    for m,s in zip(mu, sigma) :
+        label += 1
+        for i in xrange(N) :
+            x = util.random_sample_2d(m, s)
+            points.append(Point(str(label)+'_'+str(i), label, x))
+    
+    return points
+
+
+######################################################################
+# k-means and k-medoids
+######################################################################
+
+def random_init(points, k) :
+    """
+    Randomly select k unique elements from points to be initial cluster centers.
+    
+    Parameters
+    --------------------
+        points         -- list of Points, dataset
+        k              -- int, number of clusters
+    
+    Returns
+    --------------------
+        initial_points -- list of k Points, initial cluster centers
+    """
+    ### ========== TODO : START ========== ###
+    # part 2c: implement (hint: use np.random.choice)
+    return np.random.choice(points, size=k, replace=False)
+    ### ========== TODO : END ========== ###
+
+
+def cheat_init(points) :
+    """
+    Initialize clusters by cheating!
+    
+    Details
+    - Let k be number of unique labels in dataset.
+    - Group points into k clusters based on label (i.e. class) information.
+    - Return medoid of each cluster as initial centers.
+    
+    Parameters
+    --------------------
+        points         -- list of Points, dataset
+    
+    Returns
+    --------------------
+        initial_points -- list of k Points, initial cluster centers
+    """
+    ### ========== TODO : START ========== ###
+    # part 2e: implement
+    initial_points = []
+    pointsDict = {}
+    clusterSet = ClusterSet()
+
+    # Find cluster of each point based on labels
+    for point in points:
+        if point.label in pointsDict:
+            pointsDict[point.label].append(point)
+        else:
+            pointsDict[point.label] = [point]
+    # Add each found cluster to a cluster set
+    for pointsSet in pointsDict.values():
+        clusterSet.add(Cluster(pointsSet))
+    return clusterSet.medoids()
+    ### ========== TODO : END ========== ###
+
+def definitelyNotCheating_init(points, k):
+    """
+    Initialize clusters by definitely not cheating!
+    (AKA we find the distance from one point to all others,
+    and then pick points at even distances from that point
+    to try to get a good distribution in space)
+    
+    Parameters
+    --------------------
+        points         -- list of Points, dataset
+        k              -- int, number of clusters
+    
+    Returns
+    --------------------
+        initial_points -- list of k Points, initial cluster centers
+    """
+    initial_points = []
+    # Pick a point randomly to start on
+    startPoint = np.random.choice(points)
+    # Calculate distance from point to all other points
+    distances = [np.linalg.norm(startPoint.attrs-other.attrs) for other in points]
+    sortedDistances = np.sort(distances)
+    # Calculate k evenly spaced intervals in sorted array
+    interval = int(np.floor(len(points) / float(k)))
+    for i in range(0, len(points), k):
+        # For each interval append a point at that distance to the initial points
+        pointIndex = np.where(sortedDistances[i] == distances)[0][0]
+        initial_points.append(points[pointIndex])
+    return initial_points
+
+def findNearestAveLabel(point, aves):
+    """
+    Return which average index a point is nearest to
+    Parameters
+    --------------------
+        point  --  Point
+        centroid       -- list of Points, centroids of clusters
+    
+    Returns
+    --------------------
+        i -- index of nearest cluster
+    """
+    return np.argmin([point.distance(ave) for ave in aves])
+
+def kAverages(points, k, average, init='random', plot=True):
+    """
+    Cluster points into k clusters using variations of k-means algorithm.
+    
+    Parameters
+    --------------------
+        points  -- list of Points, dataset
+        k       -- int, number of clusters
+        average -- method of ClusterSet
+                   determines how to calculate average of points in cluster
+                   allowable: ClusterSet.centroids, ClusterSet.medoids
+        init    -- string, method of initialization
+                   allowable: 
+                       'cheat'  -- use cheat_init to initialize clusters
+                       'random' -- use random_init to initialize clusters
+        plot    -- bool, True to plot clusters with corresponding averages
+                         for each iteration of algorithm
+    
+    Returns
+    --------------------
+        k_clusters -- ClusterSet, k clusters
+    """
+    
+    ### ========== TODO : START ========== ###
+    # part 2c: implement
+    # Hints:
+    #   (1) On each iteration, keep track of the new cluster assignments
+    #       in a separate data structure. Then use these assignments to 
+    #       create new Cluster objects and a new ClusterSet object. Then
+    #       update the centroids.
+    #   (2) Repeat until the clustering no longer changes.
+    #   (3) To plot, use plot_clusters(...).
+    # Initialize cluster centers:
+    aves = []
+    if init == "random":
+        aves = random_init(points, k)
+    elif init == "cheat":
+        aves = cheat_init(points)
+    elif init == "notCheat":
+        aves = definitelyNotCheating_init(points, k)
+    prev_aves = []
+    k_clusters = ClusterSet()
+    it = 0
+    #equivalent
+    while not np.array_equal([ave.attrs for ave in aves], prev_aves):
+        k_clusters = ClusterSet()
+        clusterPoints = [[] for ave in aves]
+        # Assign points to nearest centroid
+        for point in points:
+            i = findNearestAveLabel(point, aves)
+            clusterPoints[i].append(point)
+        # Move cluster centroid to mean of points assigned
+        for pointList in clusterPoints:
+            cluster = Cluster(pointList)
+            k_clusters.add(cluster)
+        prev_aves = [ave.attrs for ave in aves]
+        aves = average(k_clusters)
+        if plot:
+            plot_clusters(k_clusters, "Iteration ".format(iter)+ str(it), average)
+        it += 1
+    return k_clusters
+    ### ========== TODO : END ========== ###
+
+def kMeans(points, k, init='random', plot=False) :
+    """
+    Cluster points into k clusters using variations of k-means algorithm.
+    
+    Parameters
+    --------------------
+        points  -- list of Points, dataset
+        k       -- int, number of clusters
+        average -- method of ClusterSet
+                   determines how to calculate average of points in cluster
+                   allowable: ClusterSet.centroids, ClusterSet.medoids
+        init    -- string, method of initialization
+                   allowable: 
+                       'cheat'  -- use cheat_init to initialize clusters
+                       'random' -- use random_init to initialize clusters
+        plot    -- bool, True to plot clusters with corresponding averages
+                         for each iteration of algorithm
+    
+    Returns
+    --------------------
+        k_clusters -- ClusterSet, k clusters
+    """
+    
+    ### ========== TODO : START ========== ###
+    # part 2c: implement
+    # Hints:
+    #   (1) On each iteration, keep track of the new cluster assignments
+    #       in a separate data structure. Then use these assignments to 
+    #       create new Cluster objects and a new ClusterSet object. Then
+    #       update the centroids.
+    #   (2) Repeat until the clustering no longer changes.
+    #   (3) To plot, use plot_clusters(...).
+    # Initialize cluster centers:
+    return kAverages(points, k, ClusterSet.centroids, init, plot)
+    ### ========== TODO : END ========== ###
+
+
+def kMedoids(points, k, init='random', plot=False) :
+    """
+    Cluster points in k clusters using k-medoids clustering.
+    See kMeans(...).
+    """
+    ### ========== TODO : START ========== ###
+    # part 2d: implement
+    return kAverages(points, k, ClusterSet.medoids, init, plot)
+    ### ========== TODO : END ========== ###
+
+
+######################################################################
+# main
+######################################################################
+
+def main() :
+    ### ========== TODO : START ========== ###
+    # part 1: explore LFW data set
+    X, y = util.get_lfw_data()
+    n, d = X.shape
+    util.show_image(X[500, :])
+    util.show_image(X[1000, :])
+    util.show_image(X[1500, :])
+
+    mean = np.mean(X, axis=0)
+    util.show_image(mean)
+
+    U, mu = util.PCA(X)
+    util.plot_gallery([util.vec_to_image(U[:,i]) for i in xrange(12)])
+
+    l_list = [1, 10, 50, 100, 500, 1288]
+    for l in l_list:
+        Z, Ul = util.apply_PCA_from_Eig(X, U, l, mu)
+        X_rec = util.reconstruct_from_PCA(Z, Ul, mu)
+        util.plot_gallery([util.vec_to_image(X_rec[i,:]) for i in xrange(12)])
+    ### ========== TODO : END ========== ###
+    
+    
+    
+    #========================================
+    # part 2
+    
+    # part b: test Cluster implementation    
+    # centroid: [ 1.04022358  0.62914619]
+    # medoid:   [ 1.05674064  0.71183522]
+    
+    np.random.seed(1234)
+    sim_points = generate_points_2d(20)
+    cluster = Cluster(sim_points)
+    print 'centroid:', cluster.centroid().attrs
+    print 'medoid:', cluster.medoid().attrs
+    
+    # parts 2c-e: test kMeans and kMedoids implementation using toy dataset
+    np.random.seed(1234)
+    sim_points = generate_points_2d(20)
+    k = 3
+    
+    # cluster using random initialization
+    kmeans_clusters = kMeans(sim_points, k, init='random', plot=True)
+    kmedoids_clusters = kMedoids(sim_points, k, init='random', plot=True)
+    
+    # cluster using cheat initialization
+    kmeans_clusters = kMeans(sim_points, k, init='cheat', plot=True)
+    kmedoids_clusters = kMedoids(sim_points, k, init='cheat', plot=True)    
+    
+    
+    
+    ### ========== TODO : START ========== ###    
+    # part 3a: cluster faces
+    np.random.seed(1234)
+    X1, y1 = util.limit_pics(X, y, [4, 6, 13, 16], 40)
+    points = build_face_image_points(X1, y1)
+    kmeans_score_list = []
+    kmedoids_score_list = []
+    k = 4
+    for i in xrange(10):
+        points = build_face_image_points(X1, y1)
+        kmeans_clusters = kMeans(points, k, init='random', plot=False)
+        points = build_face_image_points(X1, y1)
+        kmedoids_clusters = kMedoids(points, k, init='random', plot=False) 
+        kmeans_score_list.append(kmeans_clusters.score())
+        kmedoids_score_list.append(kmedoids_clusters.score())
+    print "Average for k-means: ", np.mean(kmeans_score_list)
+    print "Minimum for k-means: ", min(kmeans_score_list)
+    print "Maximum for k-means: ", max(kmeans_score_list)
+    print "Average for k-medoids: ", np.mean(kmedoids_score_list)
+    print "Minimum for k-medoids: ", min(kmedoids_score_list)
+    print "Maximum for k-medoids: ", max(kmedoids_score_list)
+
+    # part 3b: explore effect of lower-dimensional representations on clustering performance
+    np.random.seed(1234)
+    k = 2
+    X1, y1 = util.limit_pics(X, y, [4, 13], 40)
+    U, mu = util.PCA(X1)
+    kmeans_score_list = []
+    kmedoids_score_list = []
+    for l in xrange(1, 42, 2):
+        Z, Ul = util.apply_PCA_from_Eig(X1, U, l, mu)
+        points = build_face_image_points(Z, y1)
+        kmeans_clusters = kMeans(points, k, init='cheat', plot=False)
+        kmedoids_clusters = kMedoids(points, k, init='cheat', plot=False) 
+        kmeans_score_list.append(kmeans_clusters.score())
+        kmedoids_score_list.append(kmedoids_clusters.score())
+    plt.plot(range(1,42,2), kmedoids_score_list, 'go', label="k-Medoids")
+    plt.plot(range(1,42,2), kmeans_score_list, 'bo', label="k-Means")
+    plt.legend()
+    plt.show()
+
+    # part 3c: determine ``most discriminative'' and ``least discriminative'' pairs of images
+    np.random.seed(1234)
+
+    # Find "average" face for each class of faces
+    labels = np.unique(y)
+    averages = []
+    for label in labels:
+        # Find images with that label
+        indices = np.where(y==label)
+        pointVals = X[indices]
+        # Average across all images in class
+        averagePoint = np.mean(pointVals, axis=0)
+        averages.append(averagePoint)
+
+    # Find further and closest faces based on averages
+    farDist = 0
+    farFaces = None
+    closeDist = float("inf")
+    closeFaces = None
+    # Compare all distances
+    for i in range(len(labels)):
+        for j in range(i+1, len(labels)):
+            dist = np.linalg.norm(averages[i]-averages[j])
+            if dist > farDist:
+                farDist = dist
+                farFaces = (i, j)
+            if dist < closeDist:
+                closeDist = dist
+                closeFaces = (i, j)
+    # Pull out images for each chosen face
+    closeLabel1 = closeFaces[0]
+    closeIndices1 = np.where(y==closeLabel1)[0]
+    closeLabel2 = closeFaces[1]
+    closeIndices2 = np.where(y==closeLabel2)[0]
+    farLabel1 = farFaces[0]
+    farIndices1 = np.where(y==farLabel1)[0]
+    farLabel2 = farFaces[1]
+    farIndices2 = np.where(y==farLabel2)[0]
+
+    print "Close: ", closeLabel1
+    util.plot_gallery([util.vec_to_image(X[i,:]) for i in closeIndices1])
+    print "Close: ", closeLabel2
+    util.plot_gallery([util.vec_to_image(X[i,:]) for i in closeIndices2])
+    print "Far: ", farLabel1
+    util.plot_gallery([util.vec_to_image(X[i,:]) for i in farIndices1])
+    print "Far: ", farLabel2
+    util.plot_gallery([util.vec_to_image(X[i,:]) for i in farIndices2])
+
+    close_score_list = []
+    far_score_list = []
+    k = 2
+    # Get points for each chosen face and run k-Medoids
+    # k-Medoids chosen because it performed better than k-Means in previous runs
+    XClose, yClose = util.limit_pics(X, y, [closeLabel1, closeLabel2], 40)
+    XFar, yFar = util.limit_pics(X, y, [farLabel1, farLabel2], 40)
+    pointsClose = build_face_image_points(XClose, yClose)
+    pointsFar = build_face_image_points(XFar, yFar)
+    for i in range(10):
+        kmedoids_clusters = kMedoids(pointsClose, k, init='random', plot=False) 
+        close_score_list.append(kmedoids_clusters.score())
+        kmedoids_clusters = kMedoids(pointsFar, k, init='random', plot=False) 
+        far_score_list.append(kmedoids_clusters.score())
+    print "Average for close: ", np.mean(close_score_list)
+    print "Minimum for close: ", min(close_score_list)
+    print "Maximum for close: ", max(close_score_list)
+    print "Average for far: ", np.mean(far_score_list)
+    print "Minimum for far: ", min(far_score_list)
+    print "Maximum for far: ", max(far_score_list)
+
+    # part 4: Test out our new init!
+    np.random.seed(1234)
+    X1, y1 = util.limit_pics(X, y, [4, 6, 13, 16], 40)
+    points = build_face_image_points(X1, y1)
+    kmeans_score_list = []
+    kmedoids_score_list = []
+    k = 4
+    for i in xrange(10):
+        points = build_face_image_points(X1, y1)
+        kmeans_clusters = kMeans(points, k, init='notCheat', plot=False)
+        points = build_face_image_points(X1, y1)
+        kmedoids_clusters = kMedoids(points, k, init='notCheat', plot=False) 
+        kmeans_score_list.append(kmeans_clusters.score())
+        kmedoids_score_list.append(kmedoids_clusters.score())
+    print "Average for k-means: ", np.mean(kmeans_score_list)
+    print "Minimum for k-means: ", min(kmeans_score_list)
+    print "Maximum for k-means: ", max(kmeans_score_list)
+    print "Average for k-medoids: ", np.mean(kmedoids_score_list)
+    print "Minimum for k-medoids: ", min(kmedoids_score_list)
+    print "Maximum for k-medoids: ", max(kmedoids_score_list)
+    
+    ### ========== TODO : END ========== ###
+
+
+if __name__ == "__main__" :
+    main()
+ \end{verbatim}   
+ \end{document}

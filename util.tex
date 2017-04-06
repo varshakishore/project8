@@ -1,3 +1,16 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{enumerate}
+\usepackage{framed}
+\usepackage{graphicx}
+\usepackage{bm}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{multicol}
+\usepackage{hyperref}
+\begin{document}
+
+\begin{verbatim}
 """
 Author      : Savannah Baron and Varsha Kishore
 Class       : HMC CS 158
@@ -7,8 +20,8 @@ Description : Utilities for Famous Faces
 """
 Author      : Yi-Chieh Wu
 Class       : HMC CS 158
-Date        : 2017 Feb 27
-Description : Utilities for Famous Faces
+Date        : 2017 April 5
+Description : Project 8
 """
 
 # numpy libraries
@@ -283,3 +296,5 @@ def reconstruct_from_PCA(Z, U, mu) :
     X_rec = np.dot(Z, np.transpose(U))+mu
     ### ========== TODO : END ========== ###
     return X_rec
+\end{verbatim}   
+ \end{document}
